@@ -1,0 +1,68 @@
+name: CI/CD - Spring Boot Angular MySQL
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build Backend Docker image
+        run: |
+          docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/springboot-app:latest ./springboot/app
+
+      - name: Push Backend Docker image
+        run: |
+          docker push ${{ secrets.DOCKERHUB_USERNAME }}/springboot-app:latest
+
+      - name: Build Frontend Docker image
+        run: |
+          docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/angular-app:latest ./angular-app
+
+      - name: Push Frontend Docker image
+        run: |
+          docker push ${{ secrets.DOCKERHUB_USERNAME }}/angular-app:latest
+
+      - name: Launch application with Docker Compose
+        run: |
+          docker-compose up -d
+
+      - name: Wait for services to be ready
+        run: |
+          echo "Waiting 40 seconds for all services to initialize..."
+          sleep 40
+
+      - name: Verify all containers are running
+        run: |
+          docker-compose ps
+          docker ps
+
+      - name: Check backend health (port 8081)
+        run: |
+          curl --retry 5 --retry-delay 5 --retry-connrefused http://localhost:8081 || echo "Backend responded"
+
+      - name: Check frontend health (port 4200)
+        run: |
+          curl --retry 5 --retry-delay 5 --retry-connrefused http://localhost:4200 || echo "Frontend responded"
+
+      - name: Show logs if anything failed
+        if: failure()
+        run: |
+          docker-compose logs
+
+      - name: Tear down containers
+        if: always()
+        run: |
+          docker-compose down

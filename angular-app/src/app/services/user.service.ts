@@ -1,28 +1,25 @@
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Observable, last } from 'rxjs';
+import { Observable } from 'rxjs';
 import { User } from '../models/User';
 
 @Injectable({
   providedIn: 'root'
 })
 export class UserService {
-
-  baseURL:string="http://196.203.224.145:8081/user"
-  constructor(private  httpClient:HttpClient) { }
+  baseURL:string="http://196.187.131.210:8081/user"
+  constructor(private httpClient:HttpClient) { }
 
   getAllUsers():Observable<any>{
     let headers = new HttpHeaders();
     headers.append("Access-Control-Allow-Origin", "*")
     return this.httpClient.get(this.baseURL + "/all",{headers})
   }
-
   deleteUser(id:string):Observable<any>{
     let headers = new HttpHeaders();
     headers.append("Access-Control-Allow-Origin", "*")
     return this.httpClient.delete(this.baseURL + "/delete/"+id,{headers})
   }
-
   addUser(firstname:string,lastname:string):Observable<any>{
     let body = { firstName: firstname, lastName: lastname };
     let url=this.baseURL + "/add";
